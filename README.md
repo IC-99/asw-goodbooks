@@ -80,4 +80,4 @@ Alla fine, l'applicazione può essere arrestata usando lo script `stop-goodbooks
   * ogni volta che il servizio *recensioni-seguite* riceve un evento **RecensioneCreatedEvent**, aggiorna la propria tabella delle recensioni e anche la tabella delle recensioni seguite
   * ogni volta che il servizio *recensioni-seguite* riceve un evento **ConnessioneConAutoreCreatedEvent** oppure **ConnessioneConRecensoreCreatedEvent**, aggiorna le proprie tabelle relative alle connessioni e anche la tabella delle recensioni seguite
   * il servizio *recensioni-seguite* risponde alle richieste GET /recensioniseguite/{utente} accedendo solo alla propria tabella delle recensioni seguite
-* I diversi servizi, all'avvio dell'applicazione, sono eseguiti in diversi container Docker attraverso l'utilizzo di Docker Compose
+* I diversi servizi, all'avvio dell'applicazione, sono eseguiti in diversi container Docker attraverso l'utilizzo di Docker Compose.
