@@ -1,0 +1,7 @@
+include 'goodbooks-common-api-event'
+include 'recensioni'
+include 'connessioni'
+include 'recensioni-seguite'
+include 'api-gateway'
+
+rootProject.name = 'asw-goodbooks'
