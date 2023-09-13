@@ -1,7 +1,6 @@
 # GOODBOOKS
 
-Progetto del corso di Analisi e progettazione del software per l'anno accademico 2022-2023. 
-
+Progetto svolto da Ivan Carlini per il corso di Architettura dei Sistemi Software per l'anno accademico 2022-2023. 
 
 ## Descrizione di questo progetto 
 
@@ -31,7 +30,6 @@ L'applicazione *GoodBooks* è composta dai seguenti microservizi:
   * `GET /cercarecensioni/titolo/{titolo}` trova tutte le recensioni di un certo libro
   * `GET /cercarecensioni/autore/{autore}` trova tutte le recensioni di un certo autore di libri
   * `GET /cercarecensioni/autori/{insieme-di-autori}` trova tutte le recensioni di un insieme di autori di libri 
-  
 * Il servizio *connessioni* gestisce le connessioni degli utenti con gli autori di libri e con i recensori che essi seguono. 
   Le connessioni sono delle coppie *utente-recensore* oppure *utente-autore*. 
   Operazioni: 
@@ -41,11 +39,9 @@ L'applicazione *GoodBooks* è composta dai seguenti microservizi:
   * `POST /connessionirecensore` aggiunge una nuova connessione utente-recensore (dati utente e recensore)
   * `GET /connessionirecensore` trova tutte le connessioni utente-recensore
   * `GET /connessionirecensore/{utente}` trova tutte le connessioni utente-recensore di un certo utente
-
 * Il servizio *recensioni-seguite* consente a un utente di trovare le recensioni di tutti gli autori di libri e i recensori che segue. 
   Operazioni: 
   * `GET /recensioniseguite/{utente}` trova tutti le recensioni seguite da un certo utente, ovvero le renesioni di autori di libri e di recensori seguiti da quell'utente
-  
 * Il servizio *api-gateway* (esposto sulla porta *8080*) è l'API gateway dell'applicazione che: 
   * espone il servizio *recensioni* sul path `/recensioni` - ad esempio, `GET /recensioni/recensioni`
   * espone il servizio *connessioni* sul path `/connessioni` - ad esempio, `GET /connessioni/connessioniautore/{utente}`
@@ -54,42 +50,34 @@ L'applicazione *GoodBooks* è composta dai seguenti microservizi:
 
 ## Esecuzione 
 
-Per eseguire questo progetto: 
+Per eseguire questo progetto:  
 
-* avviare *Consul* eseguendo lo script `start-consul.sh` 
-
-* per avviare l'applicazione *GoodBooks*, eseguire lo script `run-goodbooks.sh` 
-
+* per avviare l'applicazione *GoodBooks*, eseguire lo script `run-goodbooks.sh`
 * per inizializzare le basi di dati con dei dati di esempio, eseguire gli script `do-init-recensioni.sh` e `do-init-connessioni.sh` 
-
 
 Sono anche forniti alcuni script di esempio: 
 
-* lo script `run-curl-client.sh` esegue un insieme di interrogazioni di esempio 
-
-* lo script `do-get-recensioni.sh` trova tutte le recensioni 
-
-* lo script `do-get-recensione.sh` trova una recensione 
-
-* lo script `do-get-recensioni-per-autore.sh` trova tutte le recensioni di un certo autore 
-
-* lo script `do-get-recensioni-per-autori.sh` trova tutte le recensioni di un insieme di autori  
-
+* lo script `run-curl-client.sh` esegue un insieme di interrogazioni di esempio
+* lo script `do-get-recensioni.sh` trova tutte le recensioni
+* lo script `do-get-recensione.sh` trova una recensione
+* lo script `do-get-recensioni-per-autore.sh` trova tutte le recensioni di un certo autore
+* lo script `do-get-recensioni-per-autori.sh` trova tutte le recensioni di un insieme di autori
 * lo script `do-get-recensioni-per-titolo.sh` trova tutte le recensioni di un certo libro
+* lo script `do-get-recensioni-per-recensore.sh` trova tutte le recensioni di un certo recensore
+* lo script `do-get-recensioni-per-recensori.sh` trova tutte le recensioni di un insieme di recensori
+* lo script `do-get-connessioni.sh` trova tutte le connessioni
+* lo script `do-get-recensioni-seguite.sh` trova tutte le recensioni seguite da un certo utente
 
-* lo script `do-get-recensioni-per-recensore.sh` trova tutte le recensioni di un certo recensore 
+Alla fine, l'applicazione può essere arrestata usando lo script `stop-goodbooks.sh`. 
 
-* lo script `do-get-recensioni-per-recensori.sh` trova tutte le recensioni di un insieme di recensori  
+## Descrizione delle attività svolte
 
-* lo script `do-get-connessioni.sh` trova tutte le connessioni 
-
-* lo script `do-get-recensioni-seguite.sh` trova tutte le recensioni seguite da un certo utente 
-
-Alla fine, l'applicazione può essere arrestata usando lo script `terminate-java-processes.sh` (**da usare con cautela!**). 
-
-Inoltre, *Consul* può essere arrestato con lo script `stop-consul.sh`. 
-
-
-## Descrizione delle attività da svolgere 
-
-Si veda la descrizione del progetto sul sito web del corso di [Architettura dei sistemi software](http://cabibbo.dia.uniroma3.it/asw/).
+* Nei servizi *recensioni* e *connessioni* è stata utilizzata una base di dati MySQL al posto di HSQLDB (ciascuna base di dati è eseguita in un container Docker separato).
+* Quando viene aggiunta una nuova recensione, il servizio *recensioni* notifica un evento **RecensioneCreatedEvent** su un canale Kafka (eseguito su un container Docker separato).
+* Quando viene aggiunta una nuova connessione utente-autore oppure una nuova connessione utente-recensore, il servizio *connessioni* notifica un evento **ConnessioneConAutoreCreated** oppure **ConnessioneConRecensoreCreated** su un canale Kafka.
+* La logica del servizio *recensioni-seguite* è stata modificata come segue:
+  * il servizio *recensioni-seguite* gestisce una propria base di dati MySQL in un container Docker separato, con una tabella per le recensioni, una per le connnessioni utente-autore, una per le connessioni utente-recensore e una per le recensioni seguite
+  * ogni volta che il servizio *recensioni-seguite* riceve un evento **RecensioneCreatedEvent**, aggiorna la propria tabella delle recensioni e anche la tabella delle recensioni seguite
+  * ogni volta che il servizio *recensioni-seguite* riceve un evento **ConnessioneConAutoreCreatedEvent** oppure **ConnessioneConRecensoreCreatedEvent**, aggiorna le proprie tabelle relative alle connessioni e anche la tabella delle recensioni seguite
+  * il servizio *recensioni-seguite* risponde alle richieste GET /recensioniseguite/{utente} accedendo solo alla propria tabella delle recensioni seguite
+* I diversi servizi, all'avvio dell'applicazione, sono eseguiti in diversi container Docker attraverso l'utilizzo di Docker Compose
