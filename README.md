@@ -47,6 +47,17 @@ L'applicazione *GoodBooks* è composta dai seguenti microservizi:
   * espone il servizio *connessioni* sul path `/connessioni` - ad esempio, `GET /connessioni/connessioniautore/{utente}`
   * espone il servizio *recensioni-seguite* sul path `/recensioni-seguite` - ad esempio, `GET /recensioni-seguite/recensioniseguite/{utente}`
 
+## Descrizione delle attività svolte
+
+* Nei servizi *recensioni* e *connessioni* è stata utilizzata una base di dati MySQL al posto di HSQLDB (ciascuna base di dati è eseguita in un container Docker separato).
+* Quando viene aggiunta una nuova recensione, il servizio *recensioni* notifica un evento **RecensioneCreatedEvent** su un canale Kafka (eseguito su un container Docker separato).
+* Quando viene aggiunta una nuova connessione utente-autore oppure una nuova connessione utente-recensore, il servizio *connessioni* notifica un evento **ConnessioneConAutoreCreated** oppure **ConnessioneConRecensoreCreated** su un canale Kafka.
+* La logica del servizio *recensioni-seguite* è stata modificata come segue:
+  * il servizio *recensioni-seguite* gestisce una propria base di dati MySQL in un container Docker separato, con una tabella per le recensioni, una per le connnessioni utente-autore, una per le connessioni utente-recensore e una per le recensioni seguite
+  * ogni volta che il servizio *recensioni-seguite* riceve un evento **RecensioneCreatedEvent**, aggiorna la propria tabella delle recensioni e anche la tabella delle recensioni seguite
+  * ogni volta che il servizio *recensioni-seguite* riceve un evento **ConnessioneConAutoreCreatedEvent** oppure **ConnessioneConRecensoreCreatedEvent**, aggiorna le proprie tabelle relative alle connessioni e anche la tabella delle recensioni seguite
+  * il servizio *recensioni-seguite* risponde alle richieste GET /recensioniseguite/{utente} accedendo solo alla propria tabella delle recensioni seguite
+* I diversi servizi, all'avvio dell'applicazione, sono eseguiti in diversi container Docker attraverso l'utilizzo di Docker Compose.
 
 ## Esecuzione 
 
@@ -69,15 +80,3 @@ Sono anche forniti alcuni script di esempio:
 * lo script `do-get-recensioni-seguite.sh` trova tutte le recensioni seguite da un certo utente
 
 Alla fine, l'applicazione può essere arrestata usando lo script `stop-goodbooks.sh`. 
-
-## Descrizione delle attività svolte
-
-* Nei servizi *recensioni* e *connessioni* è stata utilizzata una base di dati MySQL al posto di HSQLDB (ciascuna base di dati è eseguita in un container Docker separato).
-* Quando viene aggiunta una nuova recensione, il servizio *recensioni* notifica un evento **RecensioneCreatedEvent** su un canale Kafka (eseguito su un container Docker separato).
-* Quando viene aggiunta una nuova connessione utente-autore oppure una nuova connessione utente-recensore, il servizio *connessioni* notifica un evento **ConnessioneConAutoreCreated** oppure **ConnessioneConRecensoreCreated** su un canale Kafka.
-* La logica del servizio *recensioni-seguite* è stata modificata come segue:
-  * il servizio *recensioni-seguite* gestisce una propria base di dati MySQL in un container Docker separato, con una tabella per le recensioni, una per le connnessioni utente-autore, una per le connessioni utente-recensore e una per le recensioni seguite
-  * ogni volta che il servizio *recensioni-seguite* riceve un evento **RecensioneCreatedEvent**, aggiorna la propria tabella delle recensioni e anche la tabella delle recensioni seguite
-  * ogni volta che il servizio *recensioni-seguite* riceve un evento **ConnessioneConAutoreCreatedEvent** oppure **ConnessioneConRecensoreCreatedEvent**, aggiorna le proprie tabelle relative alle connessioni e anche la tabella delle recensioni seguite
-  * il servizio *recensioni-seguite* risponde alle richieste GET /recensioniseguite/{utente} accedendo solo alla propria tabella delle recensioni seguite
-* I diversi servizi, all'avvio dell'applicazione, sono eseguiti in diversi container Docker attraverso l'utilizzo di Docker Compose.
